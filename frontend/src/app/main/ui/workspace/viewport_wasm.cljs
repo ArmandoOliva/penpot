@@ -504,7 +504,7 @@
            :on-frame-select on-frame-select}])
 
        (when show-draw-area?
-         [:& drawarea/draw-area
+         [:> drawarea/draw-area*
           {:shape drawing-obj
            :zoom zoom
            :tool drawing-tool}])
