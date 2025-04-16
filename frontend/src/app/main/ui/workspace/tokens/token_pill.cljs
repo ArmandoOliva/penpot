@@ -17,6 +17,7 @@
    [app.main.ui.ds.foundations.utilities.token.token-status :refer [token-status-icon*]]
    [app.main.ui.workspace.tokens.changes :as wtch]
    [app.main.ui.workspace.tokens.token :as wtt]
+   [app.main.ui.ds.tooltip.tooltip :as too]
    [app.util.dom :as dom]
    [app.util.i18n :refer [tr]]
    [cuerdas.core :as str]
@@ -238,17 +239,21 @@
            (dom/stop-propagation event)
            (when (and can-edit? (not (seq errors)) on-click)
              (on-click event))))
+        
+        {:keys [on-open-tooltip on-close-tooltip
+                aria-describedby]}
+        (too/use-tooltip-trigger-hook "test-tooltip-pill")
 
-        ;; FIXME: missing deps
         on-hover
         (mf/use-fn
-         (mf/deps selected-shapes is-viewer? active-theme-tokens token half-applied? no-valid-value ref-not-in-active-set)
+         (mf/deps on-open-tooltip selected-shapes is-viewer? active-theme-tokens token half-applied? no-valid-value ref-not-in-active-set)
          (fn [event]
-           (let [node  (dom/get-current-target event)
+           (let [node  (dom/get-element "test-tooltip-pill")
                  theme-token (get active-theme-tokens (:name token))
                  title (generate-tooltip is-viewer? (first selected-shapes) theme-token token
                                          half-applied? no-valid-value ref-not-in-active-set)]
-             (dom/set-attribute! node "title" title))))]
+             (dom/set-html! node title)
+             (on-open-tooltip event))))]
 
     [:button {:class (stl/css-case
                       :token-pill true
@@ -263,9 +268,13 @@
                                                       errors?)
                       :token-pill-invalid-applied-viewer (and is-viewer?
                                                               (and full-applied? errors?)))
+              :aria-describedby aria-describedby
               :type "button"
+              :on-focus on-hover
+              :on-blur on-close-tooltip
               :on-click on-click
               :on-mouse-enter on-hover
+              :on-mouse-leave on-close-tooltip
               :on-context-menu on-context-menu}
      (cond
        errors?
@@ -289,4 +298,7 @@
           [:span {:class (stl/css :last-name-wrapper)} last-part]])
        [:span {:class (stl/css :name-wrapper)
                :aria-label name}
-        name])]))
+        name])
+     [:> too/tooltip* {:id "test-tooltip-pill"}
+      ]
+     ]))

@@ -1,0 +1,23 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) KALEIDOS INC
+
+@use "../_sizes.scss" as *;
+@use "../_borders.scss" as *;
+@use "../typography.scss" as *;
+
+.tooltip {
+  background-color: var(--color-background-primary);
+  color: var(--color-foreground-secondary);
+  width: fit-content;
+  position: absolute;
+  max-width: $sz-352;
+  padding: var(--sp-s) var(--sp-m);
+  border-radius: var(--sp-xs);
+  border: $b-1 solid var(--color-accent-primary-muted);
+  &:focus {
+    background-color: red;
+  }
+}

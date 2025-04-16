@@ -26,6 +26,7 @@
    [app.util.i18n :as i18n :refer [tr]]
    [app.util.keyboard :as kbd]
    [app.util.storage :as storage]
+   [app.main.ui.ds.tooltip.tooltip :as too]
    [app.util.time :as dt]
    [cuerdas.core :as str]
    [okulary.core :as l]
@@ -44,6 +45,23 @@
 (def ^:private menu-icon
   (i/icon-xref :menu (stl/css :menu-icon)))
 
+(mf/defc test-component*
+  {::mf/props :obj}
+  []
+  (let [{:keys [on-open-tooltip
+                on-close-tooltip
+                aria-describedby]}
+        (too/use-tooltip-trigger-hook "test-tooltip")]
+    [:div {:class (stl/css :test-component)
+           :on-mouse-enter on-open-tooltip
+           :on-mouse-leave on-close-tooltip
+           :on-focus on-open-tooltip
+           :on-blur on-close-tooltip
+           :aria-describedby aria-describedby}
+     [:h1 "Test component     "]
+     [:> too/tooltip* {:id "test-tooltip"}
+      [:span "Este es un tooltip de prueba"]]]))
+
 (mf/defc header*
   {::mf/wrap [mf/memo]
    ::mf/props :obj
@@ -52,6 +70,7 @@
   (let [on-click (mf/use-fn #(st/emit! (dd/create-project)))]
     [:header {:class (stl/css :dashboard-header) :data-testid "dashboard-header"}
      [:div#dashboard-projects-title {:class (stl/css :dashboard-title)}
+      [:> test-component*]
       [:h1 (tr "dashboard.projects-title")]]
      (when can-edit
        [:button {:class (stl/css :btn-secondary :btn-small)
