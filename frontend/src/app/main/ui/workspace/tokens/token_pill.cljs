@@ -242,7 +242,7 @@
         
         {:keys [on-open-tooltip on-close-tooltip
                 aria-describedby]}
-        (too/use-tooltip-trigger-hook "test-tooltip-pill")
+        (too/use-tooltip-trigger-hook "test-tooltip-pill" :top 8)
 
         on-hover
         (mf/use-fn

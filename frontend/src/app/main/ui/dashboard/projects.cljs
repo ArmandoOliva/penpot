@@ -48,18 +48,19 @@
 (mf/defc test-component*
   {::mf/props :obj}
   []
-  (let [{:keys [on-open-tooltip
+  (let [tooltip-ref (mf/use-ref nil)
+        {:keys [on-open-tooltip
                 on-close-tooltip
                 aria-describedby]}
-        (too/use-tooltip-trigger-hook "test-tooltip")]
+        (too/use-tooltip-trigger-hook "test-tooltip" :top 8)]
     [:div {:class (stl/css :test-component)
            :on-mouse-enter on-open-tooltip
            :on-mouse-leave on-close-tooltip
            :on-focus on-open-tooltip
            :on-blur on-close-tooltip
            :aria-describedby aria-describedby}
-     [:h1 "Test component     "]
-     [:> too/tooltip* {:id "test-tooltip"}
+     [:h1 {:style {:border "1px solid red"}} "Test component     "]
+     [:> too/tooltip* {:id "test-tooltip" :ref tooltip-ref}
       [:span "Este es un tooltip de prueba"]]]))
 
 (mf/defc header*
