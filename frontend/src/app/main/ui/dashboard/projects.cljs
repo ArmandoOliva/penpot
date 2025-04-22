@@ -20,13 +20,13 @@
    [app.main.ui.dashboard.pin-button :refer [pin-button*]]
    [app.main.ui.dashboard.project-menu :refer [project-menu*]]
    [app.main.ui.ds.product.empty-placeholder :refer [empty-placeholder*]]
+   [app.main.ui.ds.tooltip.tooltip :as too]
    [app.main.ui.hooks :as hooks]
    [app.main.ui.icons :as i]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
    [app.util.keyboard :as kbd]
    [app.util.storage :as storage]
-   [app.main.ui.ds.tooltip.tooltip :as too]
    [app.util.time :as dt]
    [cuerdas.core :as str]
    [okulary.core :as l]
@@ -48,20 +48,11 @@
 (mf/defc test-component*
   {::mf/props :obj}
   []
-  (let [tooltip-ref (mf/use-ref nil)
-        {:keys [on-open-tooltip
-                on-close-tooltip
-                aria-describedby]}
-        (too/use-tooltip-trigger-hook "test-tooltip" :top 8)]
-    [:div {:class (stl/css :test-component)
-           :on-mouse-enter on-open-tooltip
-           :on-mouse-leave on-close-tooltip
-           :on-focus on-open-tooltip
-           :on-blur on-close-tooltip
-           :aria-describedby aria-describedby}
-     [:h1 {:style {:border "1px solid red"}} "Test component     "]
-     [:> too/tooltip* {:id "test-tooltip" :ref tooltip-ref}
-      [:span "Este es un tooltip de prueba"]]]))
+  [:> too/tooltip* {:id "test-tooltip"
+                    :position "bottom"
+                    :content (mf/html [:span {:style {:border "1px solid blue"}}
+                                       "esto es un tooltip"])}
+   [:h1 {:style {:border "1px solid red"}} "Test component     "]])
 
 (mf/defc header*
   {::mf/wrap [mf/memo]
