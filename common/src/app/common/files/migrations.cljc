@@ -38,8 +38,6 @@
 #?(:cljs (l/set-level! :info))
 
 (declare ^:private available-migrations)
-(declare ^:private migration-up-index)
-(declare ^:private migration-down-index)
 
 (def version cfd/version)
 
