@@ -76,3 +76,28 @@
   align-self: end;
   margin-inline-start: $s-4;
 }
+
+.team {
+  display: grid;
+  grid-auto-rows: min-content;
+  gap: $s-8;
+  max-width: $s-1000;
+  width: 100%;
+}
+
+.team-label {
+  @include t.use-typography("headline-small");
+  color: var(--title-foreground-color);
+}
+
+.team-text {
+  @include t.use-typography("body-large");
+  color: var(--color-foreground-primary);
+}
+
+.subscription-icon {
+  @extend .button-icon;
+  stroke: var(--color-foreground-primary);
+  border-radius: $s-4;
+  border: $s-1 solid var(--color-foreground-primary);
+}

@@ -1067,6 +1067,9 @@ msgstr "Penpot Gratis"
 msgid "dashboard.upgrade-plan.power-up"
 msgstr "Mejora"
 
+msgid "subscription.dashboard.team-plan"
+msgstr "Plan de equipo"
+
 msgid "subscription.dashboard.power-up.professional.top-title"
 msgstr "Plan Professional"
 

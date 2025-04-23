@@ -21,7 +21,8 @@
    [app.main.refs :as refs]
    [app.main.router :as rt]
    [app.main.store :as st]
-   [app.main.ui.components.dropdown-menu :refer [dropdown-menu dropdown-menu-item*]]
+   [app.main.ui.components.dropdown-menu :refer [dropdown-menu
+                                                 dropdown-menu-item*]]
    [app.main.ui.components.link :refer [link]]
    [app.main.ui.dashboard.comments :refer [comments-icon* comments-section]]
    [app.main.ui.dashboard.inline-edition :refer [inline-edition]]
@@ -306,7 +307,9 @@
          (mf/deps on-create-clicked)
          (fn [event]
            (when (kbd/enter? event)
-             (on-create-clicked event))))]
+             (on-create-clicked event))))
+
+        subscription-name :unlimited]
 
     [:*
      [:> dropdown-menu-item* {:on-click    team-selected
@@ -330,8 +333,14 @@
         [:img {:src (cf/resolve-team-photo-url team-item)
                :class (stl/css :team-picture)
                :alt (:name team-item)}]
-        [:span {:class (stl/css :team-text)
-                :title (:name team-item)} (:name team-item)]
+        (if (and (contains? cf/flags :subscriptions)
+                 (or (= :unlimited subscription-name) (= :enterprise subscription-name))
+                 (:is-owner (:permissions team-item)))
+          [:div  {:class (stl/css :team-text-with-icon)}
+           [:span {:class (stl/css :team-text) :title (:name team-item)} (:name team-item)]
+           [:> subscription/menu-team-icon* {:subscription-name subscription-name}]]
+          [:span {:class (stl/css :team-text)
+                  :title (:name team-item)} (:name team-item)])
         (when (= (:id team-item) (:id team))
           tick-icon)])
 

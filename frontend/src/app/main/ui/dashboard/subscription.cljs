@@ -76,3 +76,25 @@
        {:top-title (tr "subscription.dashboard.power-up.enterprise-plan")
         :top-description (tr "subscription.dashboard.power-up.enterprise.description")
         :has-dropdown false}])))
+
+(mf/defc team*
+  []
+  (let [;; TODO subscription cases professional/unlimited/enterprise
+        subscription-name :unlimited
+        subscription-is-trial false]
+
+    [:div {:class (stl/css :team)}
+     [:div {:class (stl/css :team-label)}
+      (tr "subscription.dashboard.team-plan")]
+     [:span {:class (stl/css :team-text)}
+      (case subscription-name
+        :professional (tr "subscription.settings.professional")
+        :unlimited (if subscription-is-trial (tr "subscription.settings.unlimited-trial") (tr "subscription.settings.unlimited"))
+        :enterprise (tr "subscription.settings.enterprise"))]]))
+
+(mf/defc menu-team-icon*
+  [{:keys [subscription-name]}]
+  [:span {:class (stl/css :subscription-icon)}
+   (case subscription-name
+     :unlimited i/character-u
+     :enterprise i/character-e)])
