@@ -37,7 +37,7 @@
 
 #?(:cljs (l/set-level! :info))
 
-(declare ^:private available-migrations)
+(declare available-migrations)
 
 (def version cfd/version)
 
@@ -49,7 +49,10 @@
   [file]
   (or (nil? (:version file))
       (not= cfd/version (:version file))
-      (not= available-migrations (:migrations file))))
+      (boolean
+       (->> (:migrations file #{})
+            (set/difference available-migrations)
+            (not-empty)))))
 
 (def xf:map-name
   (map :name))
