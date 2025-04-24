@@ -95,9 +95,48 @@
   color: var(--color-foreground-primary);
 }
 
+.manage-subscription-link {
+  @include buttonStyle;
+  @include t.use-typography("body-small");
+  color: var(--color-accent-tertiary);
+  display: flex;
+  padding: 0;
+}
+
 .subscription-icon {
   @extend .button-icon;
   stroke: var(--color-foreground-primary);
   border-radius: $s-4;
   border: $s-1 solid var(--color-foreground-primary);
+}
+
+.menu-item {
+  @extend .menu-item-base;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--menu-foreground-color-hover);
+
+    .open-arrow {
+      svg {
+        stroke: var(--menu-foreground-color-hover);
+      }
+    }
+  }
+}
+
+.members-cta {
+  height: fit-content;
+  margin-block-start: $s-8;
+  margin-inline-start: $s-68;
+  max-width: $s-200;
+}
+
+.cta-message {
+  @include t.use-typography("body-small");
+  color: var(--color-foreground-secondary);
+
+  a {
+    color: var(--color-accent-primary);
+  }
 }

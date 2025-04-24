@@ -22,7 +22,7 @@
    [app.main.ui.components.file-uploader :refer [file-uploader]]
    [app.main.ui.components.forms :as fm]
    [app.main.ui.dashboard.change-owner]
-   [app.main.ui.dashboard.subscription :refer [team*]]
+   [app.main.ui.dashboard.subscription :refer [team* members-cta*]]
    [app.main.ui.dashboard.team-form]
    [app.main.ui.ds.foundations.assets.icon :refer [icon*]]
    [app.main.ui.icons :as i]
@@ -541,7 +541,10 @@
    [:section {:class (stl/css :dashboard-container :dashboard-team-members)}
     [:> team-members*
      {:profile profile
-      :team team}]]])
+      :team team}]
+    (when (contains? cfg/flags :subscriptions)
+      [:> members-cta*])
+    ]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; INVITATIONS SECTION
@@ -1165,5 +1168,5 @@
          (tr "labels.num-of-files" (i18n/c (:files stats)))]]]
 
       (when (contains? cfg/flags :subscriptions)
-        [:> team*])]]))
+        [:> team* {:is-owner (:is-owner permissions)}])]]))
 

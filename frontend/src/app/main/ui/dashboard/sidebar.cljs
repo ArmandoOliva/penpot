@@ -309,6 +309,7 @@
            (when (kbd/enter? event)
              (on-create-clicked event))))
 
+        ;; TODO subscription cases professional/unlimited/enterprise
         subscription-name :unlimited]
 
     [:*
@@ -333,6 +334,7 @@
         [:img {:src (cf/resolve-team-photo-url team-item)
                :class (stl/css :team-picture)
                :alt (:name team-item)}]
+        ;; TODO complete this condition with the case that a user belongs to a team with a subscription
         (if (and (contains? cf/flags :subscriptions)
                  (or (= :unlimited subscription-name) (= :enterprise subscription-name))
                  (:is-owner (:permissions team-item)))
@@ -983,7 +985,7 @@
          [:span (tr "dashboard.upgrade-plan.penpot-free")]
          [:span {:class (stl/css :no-limits)} (tr "dashboard.upgrade-plan.no-limits")]]
         [:div {:class (stl/css :power-up)}
-         (tr "dashboard.upgrade-plan.power-up")]])
+         (tr "subscription.dashboard.upgrade-plan.power-up")]])
 
      (when (and team profile)
        [:& comments-section
