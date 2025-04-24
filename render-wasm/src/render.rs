@@ -178,7 +178,7 @@ impl RenderState {
         self.viewbox.set_wh(width as f32, height as f32);
     }
 
-    pub fn flush(&mut self) {
+    pub fn flush_and_submit(&mut self) {
         self.surfaces
             .flush_and_submit(&mut self.gpu_state, SurfaceId::Target);
     }
@@ -499,7 +499,7 @@ impl RenderState {
         performance::begin_measure!("process_animation_frame");
         if self.render_in_progress {
             self.render_shape_tree(tree, modifiers, structure, timestamp)?;
-            self.flush();
+            self.flush_and_submit();
 
             if self.render_in_progress {
                 if let Some(frame_id) = self.render_request_id {
@@ -809,7 +809,6 @@ impl RenderState {
         }
 
         debug::render_wasm_label(self);
-        self.flush();
 
         Ok(())
     }
