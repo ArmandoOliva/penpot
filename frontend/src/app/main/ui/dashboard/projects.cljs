@@ -49,7 +49,7 @@
   {::mf/props :obj}
   []
   [:> too/tooltip* {:id "test-tooltip"
-                    :position "bottom"
+                    :placement "bottom"
                     :content (mf/html [:span {:style {:border "1px solid blue"}}
                                        "esto es un tooltip"])}
    [:h1 {:style {:border "1px solid red"}} "Test component     "]])
@@ -65,10 +65,17 @@
       [:> test-component*]
       [:h1 (tr "dashboard.projects-title")]]
      (when can-edit
-       [:button {:class (stl/css :btn-secondary :btn-small)
-                 :on-click on-click
-                 :data-testid "new-project-button"}
-        (tr "dashboard.new-project")])]))
+       
+       [:> too/tooltip* {:id "new-project-tooltip"
+                         :placement "bottom"
+                         :content (mf/html [:div {:style {:border "1px solid blue"}}
+                                            "esto es un tooltip muy muy largo"
+                                            [:div "que no deberia caber en una sola linea"]])}
+        [:button {:class (stl/css :btn-secondary :btn-small)
+                  :on-click on-click
+                  :data-testid "new-project-button"}
+         (tr "dashboard.new-project")]]
+       )]))
 
 (mf/defc team-hero*
   {::mf/wrap [mf/memo]

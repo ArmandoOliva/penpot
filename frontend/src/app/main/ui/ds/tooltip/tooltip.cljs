@@ -13,7 +13,20 @@
    [app.util.dom :as dom]
    [rumext.v2 :as mf]))
 
-(defn- calculate-tooltip-coords [tooltip trigger position offset]
+(defn is-bounding-rect-outside?
+  [rect]
+  (let [{:keys [left top right bottom width height]} rect
+        {window-width  :width
+         window-height :height} (dom/get-window-size)]
+
+    (or (< left 0)
+        (< top 0)
+        (> (+ left width) window-width)
+        (> (+ top height) window-height)
+        (> right window-width)
+        (> bottom window-height))))
+
+(defn- calculate-tooltip-rect [tooltip trigger placement offset]
   (let [{trigger-top    :top
          trigger-left   :left
          trigger-right  :right
@@ -24,76 +37,138 @@
         {tooltip-width  :width
          tooltip-height :height} (dom/get-bounding-rect tooltip)
 
-        offset (d/nilv offset 8)]
-    
-    (case position
-      :bottom
-      (do
-        (dom/set-css-property! tooltip "top" (dm/str (+ trigger-bottom offset) "px"))
-        (dom/set-css-property! tooltip "left" (dm/str (- (+ trigger-left (/ trigger-width 2)) (/ tooltip-width 2)) "px")))
+        offset (d/nilv offset 0)
+        overlay-offset 32]
 
-      :left
-      (do
-        (dom/set-css-property! tooltip "top" (dm/str (- (+ trigger-top (/ trigger-height 2)) (/ tooltip-height 2)) "px"))
-        (dom/set-css-property! tooltip "left" (dm/str (- trigger-left offset tooltip-width) "px")))
+    (case placement
+      "bottom"
+      {:top (+ trigger-bottom offset)
+       :left (- (+ trigger-left (/ trigger-width 2)) (/ tooltip-width 2))
+       :right (+ (- (+ trigger-left (/ trigger-width 2)) (/ tooltip-width 2)) tooltip-width)
+       :bottom (+ (- trigger-bottom offset) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height}
 
-      :right
-      (do
-        (dom/set-css-property! tooltip "top" (dm/str (- (+ trigger-top (/ trigger-height 2)) (/ tooltip-height 2)) "px"))
-        (dom/set-css-property! tooltip "left" (dm/str (+ trigger-right offset) "px")))
+      "left"
+      {:top (- (+ trigger-top (/ trigger-height 2) 12) (/ tooltip-height 2))
+       :left (- trigger-left tooltip-width)
+       :right (+ (- trigger-left tooltip-width) tooltip-width)
+       :bottom (+ (- (+ trigger-top (/ trigger-height 2) 12) (/ tooltip-height 2)) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height}
 
-      (do
-        (dom/set-css-property! tooltip "top" (dm/str (- trigger-top offset tooltip-height) "px"))
-        (dom/set-css-property! tooltip "left" (dm/str (- (+ trigger-left (/ trigger-width 2)) (/ tooltip-width 2)) "px"))))))
+      "right"
+      {:top (- (+ trigger-top (/ trigger-height 2) 4) (/ tooltip-height 2))
+       :left (+ trigger-right offset)
+        :right (+ trigger-right offset tooltip-width)
+        :bottom (+ (- (+ trigger-top (/ trigger-height 2) 4) (/ tooltip-height 2)) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height}
 
-  ;; Preguntar a Natacha
-(defn- get-fallback-order [position]
-  (case position
-    "top" [:top :bottom :right :left]
-    "bottom" [:bottom :top :right :left]
-    "left" [:left :right :top :bottom]
-    "right" [:right :left :top :bottom]))
+      "bottom-right"
+      {:top (+ trigger-bottom offset)
+       :left (- trigger-right overlay-offset)
+        :right (+ (- trigger-right overlay-offset) tooltip-width)
+        :bottom (+ (- trigger-bottom offset) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height}
+
+      "bottom-left"
+      {:top (+ trigger-bottom offset)
+       :left (+ (- trigger-left tooltip-width) overlay-offset)
+        :right (+ (- trigger-left tooltip-width) overlay-offset tooltip-width)
+        :bottom (+ (- trigger-bottom offset) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height}
+
+      "top-right"
+      {:top (- trigger-top offset tooltip-height)
+       :left (- trigger-right overlay-offset) 
+       :right (+ (- trigger-right overlay-offset) tooltip-width)
+       :bottom (+ (- trigger-top offset tooltip-height) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height}
+
+      "top-left"
+      {:top (- trigger-top offset tooltip-height)
+       :left (+ (- trigger-left tooltip-width) overlay-offset)
+        :right (+ (- trigger-left tooltip-width) overlay-offset tooltip-width)
+        :bottom (+ (- trigger-top offset tooltip-height) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height}
+
+      {:top (- trigger-top offset tooltip-height)
+       :left (- (+ trigger-left (/ trigger-width 2)) (/ tooltip-width 2))
+        :right (+ (- (+ trigger-left (/ trigger-width 2)) (/ tooltip-width 2)) tooltip-width)
+        :bottom (+ (- trigger-top offset tooltip-height) tooltip-height)
+       :width tooltip-width
+       :height tooltip-height})))
+
+(defn- get-fallback-order [placement]
+  (case placement
+    "top" ["top" "right" "bottom" "left" "top-right" "bottom-right" "bottom-left" "top-left"]
+    "bottom" ["bottom" "left" "top" "right" "bottom-right" "bottom-left" "top-left" "top-right"]
+    "left" ["left" "top" "right" "bottom" "top-left" "top-right" "bottom-right" "bottom-left"]
+    "right" ["right" "bottom" "left" "top" "bottom-left" "top-left" "top-right" "bottom-right"]
+    "top-right" ["top-right" "right" "bottom" "left" "top" "bottom-right" "bottom-left" "top-left"]
+    "bottom-right" ["bottom-right" "bottom" "left" "top" "right" "bottom-left" "top-left" "top-right"]
+    "bottom-left" ["bottom-left" "left" "top" "right" "bottom"  "top-left" "top-right" "bottom-right"]
+    "top-left" ["top-left" "top" "right" "bottom" "left" "bottom-left" "top-right" "bottom-right"]))
 
 (def ^:private schema:tooltip
   [:map
    [:class {:optional true} :string]
    [:id :string]
    [:offset {:optional true} :int]
-   [:position {:optional true}
-    [:maybe [:enum "top" "bottom" "left" "right"]]]])
+   [:placement {:optional true}
+    [:maybe [:enum "top" "bottom" "left" "right" "top-right" "bottom-right" "bottom-left" "top-left"]]]])
 
 (mf/defc tooltip*
   {::mf/props :obj
    ::mf/schema schema:tooltip}
-  [{:keys [class id children content position offset] :rest props}]
-  (let [on-show
+  [{:keys [class id children content placement offset] :rest props}]
+  (let [placement* (mf/use-state (d/nilv placement "top"))
+        placement  (deref placement*)
+        on-show
         (mf/use-fn
-         (mf/deps id)
+         (mf/deps id placement)
          (fn [event]
-          (when-let [tooltip (dom/get-element id)]
-            (let [trigger (dom/event->target event)
-                  all-placements (if position
-                                   (get-fallback-order position)
-                                   (get-fallback-order "top"))]
+           (when-let [tooltip (dom/get-element id)]
+             (let [trigger (dom/event->target event)
+                   all-placements (get-fallback-order placement)]
 
-              (.showPopover tooltip)
-              (loop [[current-placement & remaining-placements] all-placements]
-                (when current-placement
-                  (calculate-tooltip-coords tooltip trigger current-placement offset)
+               (.showPopover tooltip)
 
-                  (when (dom/is-element-outside? tooltip)
-                    (recur remaining-placements))))))))
+               (loop [[current-placement & remaining-placements] all-placements]
+                 (when current-placement
+                   (reset! placement* (name current-placement))
+                   (let [tooltip-rect (calculate-tooltip-rect tooltip trigger current-placement offset)]
+                     (if (is-bounding-rect-outside? tooltip-rect)
+                       (recur remaining-placements)
+                       (do (dom/set-css-property! tooltip "display" "grid")
+                           (dom/set-css-property! tooltip "top" (dm/str (:top tooltip-rect) "px"))
+                           (dom/set-css-property! tooltip "left" (dm/str (:left tooltip-rect) "px")))))))))))
 
         on-hide (mf/use-fn
                  (mf/deps id)
                  (fn [] (when-let [tooltip (dom/get-element id)]
-                         (dom/unset-css-property! tooltip "top")
-                         (dom/unset-css-property! tooltip "bottom")
-                         (dom/unset-css-property! tooltip "left")
-                         (dom/unset-css-property! tooltip "right")
-                         (.hidePopover tooltip))))
-        
-        class (d/append-class class (stl/css :tooltip))
+                          (dom/unset-css-property! tooltip "display")
+                          (dom/unset-css-property! tooltip "top")
+                          (dom/unset-css-property! tooltip "bottom")
+                          (dom/unset-css-property! tooltip "left")
+                          (dom/unset-css-property! tooltip "right")
+                          (.hidePopover tooltip))))
+
+        class (d/append-class class  (stl/css-case
+                                      :tooltip true
+                                      :tooltip-top (= placement "top")
+                                      :tooltip-bottom (= placement "bottom")
+                                      :tooltip-left (= placement "left")
+                                      :tooltip-right (= placement "right")
+                                      :tooltip-top-right (= placement "top-right")
+                                      :tooltip-bottom-right (= placement "bottom-right")
+                                      :tooltip-bottom-left (= placement "bottom-left")
+                                      :tooltip-top-left (= placement "top-left")))
         props (mf/spread-props props {:on-mouse-enter on-show
                                       :on-mouse-leave on-hide
                                       :on-focus on-show
@@ -106,8 +181,11 @@
              :id id
              :popover "auto"
              :role "tooltip"}
-      (if (fn? content)
-        (content)
-        content)]]))
+      [:div {:class (stl/css :tooltip-content)}
+       (if (fn? content)
+         (content)
+         content)]
+      [:div {:class (stl/css :tooltip-arrow)
+             :id "tooltip-arrow"}]]]))
 
 
