@@ -12,6 +12,7 @@
    [app.common.data.macros :as dm]
    [app.common.files.helpers :as cfh]
    [app.common.geom.shapes :as gsh]
+   [app.common.logging :as log]
    [app.common.types.shape :as cts]
    [app.common.types.shape-tree :as ctt]
    [app.common.types.shape.layout :as ctl]
@@ -283,6 +284,7 @@
     ;;       canvas, even though we are not using `page-id` inside the hook.
     ;;       We think moving this out to a handler will make the render code
     ;;       harder to follow through.
+
     (mf/with-effect [page-id]
       (when-let [canvas (mf/ref-val canvas-ref)]
         (->> wasm.api/module
@@ -315,8 +317,12 @@
 
     (mf/with-effect [@canvas-init? zoom vbox background]
       (when (and @canvas-init? (not @initialized?))
-        (wasm.api/initialize base-objects zoom vbox background)
-        (reset! initialized? true)))
+        (-> (wasm.api/initialize-emoji)
+            (p/then (fn [_]
+                      (wasm.api/initialize base-objects zoom vbox background)
+                      (reset! initialized? true)))
+            (p/catch (fn [err]
+                       (log/error "error on initialization:" err))))))
 
     (mf/with-effect [vbox zoom]
       (when (and @canvas-init? initialized?)

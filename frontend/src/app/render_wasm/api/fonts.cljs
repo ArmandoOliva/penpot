@@ -77,7 +77,7 @@
 
 ;; IMPORTANT: It should be noted that only TTF fonts can be stored.
 (defn- store-font-buffer
-  [font-data font-array-buffer]
+  [font-data font-array-buffer is-emoji]
   (let [id-buffer (:family-id-buffer font-data)
         size (.-byteLength font-array-buffer)
         ptr  (h/call wasm/internal-module "_alloc_bytes" size)
@@ -90,17 +90,18 @@
             (aget id-buffer 2)
             (aget id-buffer 3)
             (:weight font-data)
-            (:style font-data))
+            (:style font-data)
+            is-emoji)
     true))
 
 (defn- store-font-url
-  [font-data font-url]
+  [font-data font-url is-emoji]
   (->> (http/send! {:method :get
                     :uri font-url
                     :response-type :blob})
        (rx/map :body)
        (rx/mapcat wapi/read-file-as-array-buffer)
-       (rx/map (fn [array-buffer] (store-font-buffer font-data array-buffer)))))
+       (rx/map (fn [array-buffer] (store-font-buffer font-data array-buffer is-emoji)))))
 
 (defn- google-font-ttf-url
   [font-id font-variant-id]
@@ -132,7 +133,7 @@
                                        (aget id-buffer 3)
                                        (:weight font-data)
                                        (:style font-data)))]
-      (when-not font-stored? (store-font-url font-data uri)))))
+      (when-not font-stored? (store-font-url font-data uri 0)))))
 
 (defn serialize-font-style
   [font-style]
@@ -155,24 +156,40 @@
   [font-weight]
   (js/Number font-weight))
 
+(defn load-emoji-font
+  []
+  (let [emoji-font-id "gfont-noto-color-emoji"
+        emoji-font-variant-id "regular"
+        font-data {:wasm-id (font-id->uuid emoji-font-id)
+                   :font-id emoji-font-id
+                   :font-variant-id emoji-font-variant-id
+                   :style 0
+                   :weight 400}
+        id-buffer (uuid/get-u32 (:wasm-id font-data))
+        font-data (assoc font-data :family-id-buffer id-buffer)
+        asset-id (font-id->asset-id emoji-font-id emoji-font-variant-id)]
+    (store-font-url font-data (font-id->ttf-url emoji-font-id asset-id emoji-font-variant-id) 1)))
+
+(defn store-font
+  [font]
+  (let [font-id (dm/get-prop font :font-id)
+        font-variant-id (dm/get-prop font :font-variant-id)
+        wasm-id (font-id->uuid font-id)
+        raw-weight (or (:weight (font-db-data font-id font-variant-id)) 400)
+
+        weight (serialize-font-weight raw-weight)
+
+        style (serialize-font-style (cond
+                                      (str/includes? font-variant-id "italic") "italic"
+                                      :else "normal"))
+        asset-id (font-id->asset-id font-id font-variant-id)
+        font-data {:wasm-id wasm-id
+                   :font-id font-id
+                   :font-variant-id font-variant-id
+                   :style style
+                   :weight weight}]
+    (store-font-id font-data asset-id)))
+
 (defn store-fonts
   [fonts]
-  (keep (fn [font]
-          (let [font-id (dm/get-prop font :font-id)
-                font-variant-id (dm/get-prop font :font-variant-id)
-                wasm-id (font-id->uuid font-id)
-                raw-weight (or (:weight (font-db-data font-id font-variant-id)) 400)
-
-                weight (serialize-font-weight raw-weight)
-
-                style (serialize-font-style (cond
-                                              (str/includes? font-variant-id "italic") "italic"
-                                              :else "normal"))
-                asset-id (font-id->asset-id font-id font-variant-id)
-                font-data {:wasm-id wasm-id
-                           :font-id font-id
-                           :font-variant-id font-variant-id
-                           :style style
-                           :weight weight}]
-            (store-font-id font-data asset-id))) fonts))
-
+  (keep (fn [font] (store-font font)) fonts))

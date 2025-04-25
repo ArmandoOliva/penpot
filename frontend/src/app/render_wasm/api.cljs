@@ -807,6 +807,17 @@
 
       (request-render "set-modifiers"))))
 
+(defn initialize-emoji
+  []
+  (p/create
+   (fn [resolve reject]
+     (let [pending (f/load-emoji-font)]
+       (->> (rx/from [pending])
+            (rx/mapcat identity)
+            (rx/reduce conj [])
+            (rx/subs! (fn [_] (resolve true))
+                      (fn [err] (reject err))))))))
+
 (defn initialize
   [base-objects zoom vbox background]
   (let [rgba (sr-clr/hex->u32argb background 1)]
